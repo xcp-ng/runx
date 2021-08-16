@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+sleep infinity & PID=$!
+trap "kill $PID" INT TERM
+wait

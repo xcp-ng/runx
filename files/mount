@@ -1,13 +1,12 @@
 #!/bin/bash
 
-workpath=/usr/share/runX
 MNT_MAX_IT=30
 OPT_MAX_IT=15
 UMNT_MAX_IT=5
 
-containerid="$1"
-crundir="$2"
-op="$3"
+crundir="$1"
+op="$2"
+
 bundle=$( cat "$crundir"/bundle )
 configfile="$bundle"/config.json
 mountpoint=$( cat "$crundir"/rootfs )

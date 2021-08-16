@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# It's probably more safe to use VM/VDI variables to destroy VM instead of
+# reading in "$crundir/xcp_vm_uuid" and "$crundir/xcp_vdi_uuid" if files are
+# removed by an external process.
+workpath="$1"
+vm_uuid="$2"
+vdi_uuid="$3"
+wrapper_pid="$4"
+
+trap '' INT ABRT
+tail --pid="$wrapper_pid" -f /dev/null
+"$workpath/delete" "$vm_uuid" "$vdi_uuid"

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-workpath=/usr/share/runX
+workpath="$1"
+containerid="$2"
+crundir="$3"
 
-containerid="$1"
-crundir="$2"
 bundle=$( cat "$crundir"/bundle )
 pidfile=$( cat "$crundir"/pidfile )
 configfile="$bundle"/config.json
@@ -11,21 +11,15 @@ mountpoint=$( cat "$crundir"/rootfs )
 appname=`cat $configfile | jq '.["Path"]'`
 cmdline=\"`cat $configfile | jq  -c -r '.["process"]["args"] | join("\" \"")'`\"
 env=`cat $configfile | jq  -c -r '.["process"]["env"] | join("\" \"")'`
-xlconf=""
 kernel="$workpath/kernel"
 ramdisk="$workpath/initrd"
+vm_uuid_file="$crundir/xcp_vm_uuid"
+vdi_uuid_file="$crundir/xcp_vdi_uuid"
+
+sr_uuid=""
 for i in $env
 do
     i=$(echo $i | tr -d \")
-    if [[ $i = XLCONF=* ]]
-    then
-        xlconf=${i#XLCONF=}
-        if [[ $xlconf = $mountpoint* ]]
-        then
-            # Don't allow the container to use XLCONF
-            xlconf=""
-        fi
-    fi
     if [[ $i = RUNX_KERNEL=* ]]
     then
         kernel=${i#RUNX_KERNEL=}
@@ -37,6 +31,33 @@ do
         ramdisk="$mountpoint"/"$ramdisk"
     fi
 done
+
+for i in $( cat $workpath/env )
+do
+    i=$(echo $i | tr -d \")
+    if [[ $i = RUNX_SR_UUID=* ]]
+    then
+        sr_uuid=${i#RUNX_SR_UUID=}
+    fi
+    if [[ $i = RUNX_TEMPLATE_UUID=* ]]
+    then
+        template_uuid=${i#RUNX_TEMPLATE_UUID=}
+    fi
+done
+
+sr_uuid=$( xe sr-list uuid="$sr_uuid" --minimal )
+if ! test "$sr_uuid"
+then
+    echo "no sr found"
+    exit 1
+fi
+
+template_uuid=$( xe template-list uuid="$template_uuid" --minimal )
+if ! test "$template_uuid"
+then
+    echo "no template found"
+    exit 1
+fi
 
 # netconf is file,type[,ip]
 netconf=`cat $configfile | jq  -c -r  '.["process"]["env"][] | select(contains("NETCONF"))'`
@@ -62,41 +83,38 @@ else
     pvcalls=1
 fi
 
-outconfig=$crundir/xen_vm.cfg
-rm $outconfig &> /dev/null
+vm_name_label="container:$containerid"
 
-echo "kernel='$kernel'" >> $outconfig
-if test "$ramdisk"
-then
-    echo "ramdisk='$ramdisk'" >> $outconfig
-fi
-echo "memory = 1024" >> $outconfig
-echo "vcpus = 2" >> $outconfig
-echo "serial='pty'" >> $outconfig
-echo "boot='c'" >> $outconfig
-if test $pvcalls -eq 0
-then
-    echo "vif=['bridge="$bridge"']" >> $outconfig
-    if test "$netaddr"
-    then
-        echo extra=\'console=hvc0 root=9p rdinit=/bin/init ip=$netaddr gw=$gw route=$route\' >> $outconfig
-    else
-        echo extra=\'console=hvc0 root=9p rdinit=/bin/init ip=dhcp\' >> $outconfig
-    fi
-else
-    echo "pvcalls=['']" >> $outconfig
-    echo extra=\'console=hvc0 root=9p rdinit=/bin/init pvcalls=1\' >> $outconfig
-fi
-echo "vfb=['vnc=1']" >> $outconfig
-echo "p9=[ 'tag=share_dir,security_model=none,path=$mountpoint' ]" >> $outconfig
-echo "name=\"$containerid\"" >> $outconfig
-if test -f "$xlconf"
-then
-    cat "$xlconf" >> $outconfig
-fi
+vm_uuid=`xe vm-install new-name-label="$vm_name_label" template="$template_uuid" --minimal`
+vdi_uuid=`xe vdi-create sr-uuid="$sr_uuid" name-label="$mountpoint" virtual-size=1KiB`
+vbd_uuid=`xe vbd-create vm-uuid="$vm_uuid" device=1 vdi-uuid="$vdi_uuid" bootable=false mode=RW type=Disk`
+
+# TODO: Network.
+# if test $pvcalls -eq 0
+# then
+#     if test "$netaddr"
+#     then
+#         echo extra=\'console=hvc0 root=9p rdinit=/bin/init ip=$netaddr gw=$gw route=$route\' >> $outconfig
+#     else
+#         echo extra=\'console=hvc0 root=9p rdinit=/bin/init ip=dhcp\' >> $outconfig
+#     fi
+# else
+#     echo "pvcalls=['']" >> $outconfig
+#     echo extra=\'console=hvc0 root=9p rdinit=/bin/init pvcalls=1\' >> $outconfig
+# fi
 
 echo $cmdline > $mountpoint/cmdline
-xl create -p $outconfig > /dev/null 2>&1
 
-pid=$( ps | grep -v grep | grep "xl create -p $outconfig" | awk '{print $1}' )
-echo -n "$pid" > "$pidfile"
+echo -n "$vm_uuid" > "$vm_uuid_file"
+echo -n "$vdi_uuid" > "$vdi_uuid_file"
+
+# Idea: We start a small program called "container-wrapper" to wait for a SIGINT, SIGABORT or SIGKILL.
+# This program can be destroyed by docker using "docker kill...", when this last one is killed, a second
+# program called "container" executes "xe vm-destroy, vdi-destroy...".
+# Otherwise with only one script we can't clean and shutdown properly the VM if a SIGKILL is received.
+"$workpath/container-wrapper" &
+wrapper_pid="$!"
+"$workpath/container" "$workpath" "$vm_uuid" "$vdi_uuid" "$wrapper_pid" &
+
+# Set the PID to make Docker happy.
+echo -n "$wrapper_pid" > "$pidfile"

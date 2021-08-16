@@ -1,6 +1,6 @@
 #!/bin/bash
 
-workpath=/usr/share/runX
+workpath=/root/Projects/runx/files/
 rundir=/run/runX
 
 guestconsole=""
@@ -103,29 +103,29 @@ fi
 
 if test $cmd = "state"
 then
-    $workpath/state $containerid "$crundir"
+    "$workpath/state" "$workpath" $containerid "$crundir"
 elif test $cmd = "start"
 then
-    $workpath/start $containerid
+    "$workpath/start" "$workpath" $containerid "$crundir"
 elif test $cmd = "pause"
 then
-    $workpath/pause $containerid pause
+    "$workpath/pause" "$workpath" $containerid "$crundir" pause
 elif test $cmd = "resume"
 then
-    $workpath/pause $containerid resume
+    "$workpath/pause" "$workpath" $containerid "$crundir" resume
 elif test $cmd = "kill"
 then
-    $workpath/delete $containerid
-    $workpath/mount $containerid "$crundir" unmount
+    "$workpath/delete" `cat "$crundir"/xcp_vm_uuid` `cat "$crundir"/xcp_vdi_uuid`
+    "$workpath/mount" "$crundir" unmount
 elif test $cmd = "create"
 then
-    $workpath/mount $containerid "$crundir" mount
-    $workpath/create $containerid "$crundir"
+    "$workpath/mount" "$crundir" mount
+    "$workpath/create" "$workpath" $containerid "$crundir"
 
     if test "$guestconsole"
     then
-        daemonize $workpath/serial_start \
-          "$containerid" \
+        daemonize "$workpath/serial_start" \
+          `cat "$crundir"/xcp_conf` \
           "$crundir"/console_pty
         for n in 10 9 8 7 6 5 4 3 2 1; do
             if [ ! -L "$crundir"/console_pty ]; then
@@ -134,14 +134,17 @@ then
               break
             fi;
         done
-        daemonize $workpath/sendfd \
+        daemonize "$workpath/sendfd" \
           "$guestconsole" \
           "$crundir"/console_pty
     else
          echo "connect to container console with 'xl console $containerid'"
     fi
+    exit 0 # Previous test can set $? to 1...
 elif test $cmd = "delete"
 then
+    "$workpath/delete" "$workpath" $containerid "$crundir"
+    "$workpath/mount" "$workpath" $containerid "$crundir" unmount
     rm -rf "$crundir"
 else
     :

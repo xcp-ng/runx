@@ -1,43 +1,30 @@
 #!/bin/bash
 
-containerid="$1"
-crundir="$2"
+workpath="$1"
+containerid="$2"
+crundir="$3"
+
 bundle=$( cat "$crundir"/bundle )
 pidfile=$( cat "$crundir"/pidfile )
-domid="$(xl domid "$containerid")"
 mountpoint=$( cat "$crundir"/rootfs )
+vm_uuid_file="$crundir"/vm_uuid
 
-if test "$domid"
+vm_uuid=""
+state="halted"
+
+if test -f "$vm_uuid_file"
 then
-    xenstate="$(xl list "$domid" 2> /dev/null | tail -n 1 | awk '{print$5}')"
-
-    if [[ $xenstate =~ p ]]
-    then
-        uptime="$(xl list "$domid" 2> /dev/null | tail -n 1 | awk '{print$6}')"
-        if [ $uptime = "0.0" ]
-        then
-            state="created"
-        else
-            state="paused"
-        fi
-    elif [[ $xenstate =~ r|b ]]
-    then
-        state="running"
-    else
-        state="stopped"
-    fi
-else
-    domid="$(xl list | tail -n 1 | awk '{print$2}')"
-    domid="$(expr $domid + 1)"
-
-    state="stopped"
+  vm_uuid=$( cat "$vm_uuid_file" )
+  if test "$vm_uuid"
+  then
+    state=`xe vm-list uuid="$vm_uuid" params=power-state --minimal`
+  fi
 fi
 
+pid=""
 if test -f "$pidfile"
 then
     pid=$( cat "$pidfile" )
-else
-    pid=$domid
 fi
 
 cat << EOF

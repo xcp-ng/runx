@@ -1,10 +1,10 @@
 #!/bin/bash
 
-containerid=$1
+vm_uuid=$1
 dev_containerd=$2
 
-domid=`xl list $containerid | tail -n 1 | awk '{print $2}'`
+domid=`list_domains | grep -i "$vm_uuid" | awk '{print $1}'`
 dev_xen=$(xenstore-read /local/domain/${domid}/console/tty)
 socat \
-	PTY,link=${dev_containerd},rawer \
-	${dev_xen},rawer
+  PTY,link=${dev_containerd},rawer \
+  ${dev_xen},rawer

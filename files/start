@@ -1,7 +1,9 @@
 #!/bin/bash
 
-workpath=/usr/share/runX
+workpath="$1"
+containerid="$2"
+crundir="$3"
 
-containerid="$1"
+vm_uuid=$( cat "$crundir"/xcp_vm_uuid )
 
-xl unpause "$1"
+xe vm-start uuid="$vm_uuid"

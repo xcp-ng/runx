@@ -1,14 +1,18 @@
 #!/bin/bash
 
-containerid="$1"
-cmd="$2"
+workpath="$1"
+containerid="$2"
+crundir="$3"
+cmd="$4"
+
+vm_uuid=$( cat "$crundir"/xcp_vm_uuid )
 
 case "$cmd" in
 pause)
-    xl pause "$containerid"
+    xe vm-pause uuid="$vm_uuid"
     ;;
 resume)
-    xl unpause "$containerid"
+    xe vm-unpause uuid="$vm_uuid"
     ;;
 *)
     echo "pause/resume command not found"
