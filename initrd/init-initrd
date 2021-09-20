@@ -1,5 +1,47 @@
 #!/bin/sh
 
+# Useful to enable the possibility to use the pivot_root command.
+switch_initramfs()
+{
+    if [ ! -r /etc/initramfs_moved ]; then
+        echo "Moving root from initramfs to tmpfs..."
+        DEST=/initramfs
+        mkdir -p $DEST
+        mount -t tmpfs -o size="100%" tmpfs $DEST
+
+        for directory in /*/ ; do
+            directory=${directory%/}
+            if [ "$directory" != "$DEST" ]; then
+                cp -a $directory $DEST 2>/dev/null
+            fi
+        done
+
+        touch $DEST/etc/initramfs_moved
+        exec switch_root $DEST $0
+    fi
+}
+
+switch_root()
+{
+    new_root=$1
+    echo "Switching root $1..."
+
+    umount /proc
+    umount /sys
+
+    mkdir -p $new_root/run
+    mount -t tmpfs tmpfs $new_root/run
+    mkdir -p $new_root/run/initramfs
+
+    pivot_root $new_root $new_root/run/initramfs
+    exec chroot / /bin/sh
+    /bin/sh # Fallback if we can't execute the command.
+}
+
+# ==============================================================================
+
+switch_initramfs
+
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t devtmpfs devtmpfs /dev
@@ -53,3 +95,5 @@ then
 		echo "nameserver 2001:4860:4860::8888" > /mnt/etc/resolv.conf
 	fi
 fi
+
+switch_root /mnt `cat /mnt/cmdline`
