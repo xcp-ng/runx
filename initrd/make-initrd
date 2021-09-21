@@ -64,6 +64,8 @@ cp "$base"/autologin $tmpdir/bin
 chmod +x $tmpdir/bin/autologin
 cp "$base"/enter $tmpdir/bin
 chmod +x $tmpdir/bin/enter
+cp "$base"/configure-network $tmpdir/bin
+chmod +x $tmpdir/bin/configure-network
 
 cd $tmpdir
 find . | cpio --create --format='newc' > $tmpfile
