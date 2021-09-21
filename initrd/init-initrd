@@ -15,13 +15,14 @@ switch_initramfs()
                 cp -a $directory $DEST 2>/dev/null
             fi
         done
+        cp /init $DEST
 
         touch $DEST/etc/initramfs_moved
         exec switch_root $DEST $0
     fi
 }
 
-switch_root()
+switch_9p_root()
 {
     new_root=$1
     echo "Switching root $1..."
@@ -33,9 +34,18 @@ switch_root()
     mount -t tmpfs tmpfs $new_root/run
     mkdir -p $new_root/run/initramfs
 
-    pivot_root $new_root $new_root/run/initramfs
-    exec chroot / /bin/sh
-    /bin/sh # Fallback if we can't execute the command.
+    # Relink some commands used in enter script.
+    # Relinking all commands has a cost of many seconds, so we do that only on required commands.
+    BUSYBOX_DIR=/run/initramfs/bin
+    for binary in ash cat chroot getty poweroff ; do
+        ln -s -f $BUSYBOX_DIR/busybox /bin/$binary
+    done
+
+    cd $new_root
+    pivot_root . $new_root/run/initramfs
+    exec $BUSYBOX_DIR/chroot . $BUSYBOX_DIR/getty -n -l $BUSYBOX_DIR/enter 115200 hvc0
+
+    $BUSYBOX_DIR/ash # Fallback if we can't execute the command.
 }
 
 # ==============================================================================
@@ -102,4 +112,4 @@ else
     udhcpc -i eth0 -n -s /bin/configure-network -q >/dev/null
 fi
 
-switch_root /mnt `cat /mnt/cmdline`
+switch_9p_root /mnt

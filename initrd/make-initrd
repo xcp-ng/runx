@@ -18,11 +18,11 @@ then
     busybox_url="https://busybox.net/downloads/""$busybox_tarball"
     busybox_src_config="$base"/busybox.config
     busybox_image="$builddir"/"$busybox_name"/busybox
-    
+
     rm -rf $outpath
     mkdir -p $outpath
     mkdir -p $builddir
-    
+
     if [[ ! -f $builddir/$busybox_tarball ]]
     then
         wget -O $builddir/$busybox_tarball --tries=20 $busybox_url
@@ -53,15 +53,10 @@ do
     ln -s /bin/busybox $tmpdir/bin/$i
 done
 
-mkdir -p $tmpdir/etc/init.d
-cp $init $tmpdir/etc/init.d/rcS
-chmod +x $tmpdir/etc/init.d/rcS
+cp $init $tmpdir/init # Busybox search a init file at the root when switch_root is called.
+chmod +x $tmpdir/init
+ln -s -f /init $tmpdir/bin/init # Change default busybox init.
 
-cp "$base"/inittab $tmpdir/etc/inittab
-cp "$base"/passwd $tmpdir/etc/passwd
-
-cp "$base"/autologin $tmpdir/bin
-chmod +x $tmpdir/bin/autologin
 cp "$base"/enter $tmpdir/bin
 chmod +x $tmpdir/bin/enter
 cp "$base"/configure-network $tmpdir/bin
