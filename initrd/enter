@@ -3,6 +3,16 @@
 BUSYBOX_DIR=/run/initramfs/bin
 
 poweroff_handler() {
+    $BUSYBOX_DIR/kill -s TERM -1
+    $BUSYBOX_DIR/sync
+    $BUSYBOX_DIR/sleep 1
+
+    $BUSYBOX_DIR/kill -s KILL -1
+    $BUSYBOX_DIR/sync
+    $BUSYBOX_DIR/sleep 1
+
+    $BUSYBOX_DIR/umount -a -r
+    $BUSYBOX_DIR/swapoff -a
     $BUSYBOX_DIR/poweroff -f
 }
 
