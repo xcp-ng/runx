@@ -2,8 +2,13 @@
 
 BUSYBOX_DIR=/run/initramfs/bin
 
+poweroff_handler() {
+    $BUSYBOX_DIR/poweroff -f
+}
+
+trap poweroff_handler 0 USR1 USR2 TERM
+
 cmd=`$BUSYBOX_DIR/cat /cmdline`
 echo "Executing $cmd..."
-eval $cmd
-
-$BUSYBOX_DIR/poweroff -f
+eval $cmd &
+wait

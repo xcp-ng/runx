@@ -34,9 +34,22 @@ switch_9p_root()
     mount -t tmpfs tmpfs $new_root/run
     mkdir -p $new_root/run/initramfs
 
+    BUSYBOX_DIR=/run/initramfs/bin
+
+    # Replace poweroff binary because it is called by a PV hypercall when xe vm-shutdown command is executed.
+    # In many cases the default poweroff binary of the 9pfs depends on systemd or another program, but we don't use it.
+    mkdir -p $new_root/sbin
+    rm $new_root/sbin/poweroff 2>/dev/null
+    ln -s $BUSYBOX_DIR/busybox $new_root/sbin/poweroff
+
+    # Do the same thing for halt and reboot
+    rm $new_root/sbin/halt 2>/dev/null
+    rm $new_root/sbin/reboot 2>/dev/null
+    ln -s $BUSYBOX_DIR/busybox $new_root/sbin/halt
+    ln -s $BUSYBOX_DIR/busybox $new_root/sbin/reboot
+
     # Relink some commands used in enter script.
     # Relinking all commands has a cost of many seconds, so we do that only on required commands.
-    BUSYBOX_DIR=/run/initramfs/bin
     for binary in ash cat chroot getty poweroff ; do
         ln -s -f $BUSYBOX_DIR/busybox /bin/$binary
     done
