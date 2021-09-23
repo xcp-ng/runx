@@ -8,9 +8,9 @@ bundle=$( cat "$crundir"/bundle )
 pidfile=$( cat "$crundir"/pidfile )
 configfile="$bundle"/config.json
 mountpoint=$( cat "$crundir"/rootfs )
-appname=`cat $configfile | jq '.["Path"]'`
-cmdline=\"`cat $configfile | jq  -c -r '.["process"]["args"] | join("\" \"")'`\"
-env=`cat $configfile | jq  -c -r '.["process"]["env"] | join("\" \"")'`
+appname=$(cat "$configfile" | jq '.["Path"]')
+cmdline=\"$(cat "$configfile" | jq  -c -r '.["process"]["args"] | join("\" \"")')\"
+env=$(cat "$configfile" | jq  -c -r '.["process"]["env"] | join("\" \"")')
 kernel="$workpath/kernel"
 ramdisk="$workpath/initrd"
 vm_uuid_file="$crundir/xcp_vm_uuid"
@@ -19,7 +19,7 @@ vdi_uuid_file="$crundir/xcp_vdi_uuid"
 sr_uuid=""
 for i in $env
 do
-    i=$(echo $i | tr -d \")
+    i=$(echo "$i" | tr -d \")
     if [[ $i = RUNX_KERNEL=* ]]
     then
         kernel=${i#RUNX_KERNEL=}
@@ -60,21 +60,22 @@ then
 fi
 
 # netconf is file,type[,ip]
-netconf=`cat $configfile | jq  -c -r  '.["process"]["env"][] | select(contains("NETCONF"))'`
-netconf=`echo "$netconf" | awk -F "=" '{print $2}'`
+netconf=$(cat "$configfile" | jq  -c -r  '.["process"]["env"][] | select(contains("NETCONF"))')
+netconf=$(echo "$netconf" | awk -F "=" '{print $2}')
 if test "$netconf"
 then
-    netfile=`echo "$netconf" | awk -F "," '{print $1}'`
-    netname=`echo "$netconf" | awk -F "," '{print $2}'`
-    netaddr=`echo "$netconf" | awk -F "," '{print $3}'`
-    nettype=`cat $netfile | jq -c -r "select(.[\"name\"] == \"$netname\") | .[\"type\"]"`
+    netfile=$(echo "$netconf" | awk -F "," '{print $1}')
+    netname=$(echo "$netconf" | awk -F "," '{print $2}')
+    netaddr=$(echo "$netconf" | awk -F "," '{print $3}')
+    nettype=$(cat "$netfile" | jq -c -r "select(.[\"name\"] == \"$netname\") | .[\"type\"]")
 
     if test "$nettype" = "bridge"
     then
         pvcalls=0
-        bridge=`cat $netfile | jq -c -r "select(.[\"name\"] == \"$netname\") | .[\"bridge\"]"`
-        gw=`cat $netfile | jq -c -r "select(.[\"name\"] == \"$netname\") | .[\"ipam\"][\"gateway\"]"`
-        route=`cat $netfile | jq -c -r "select(.[\"name\"] == \"$netname\") | .[\"ipam\"][\"subnet\"]"`
+        bridge=$(cat "$netfile" | jq -c -r "select(.[\"name\"] == \"$netname\") | .[\"bridge\"]")
+        gw=$(cat "$netfile" | jq -c -r "select(.[\"name\"] == \"$netname\") | .[\"ipam\"][\"gateway\"]")
+        route=$(cat "$netfile" | jq -c -r "select(.[\"name\"] == \"$netname\") | .[\"ipam\"][\"subnet\"]")
+        dns=$(cat "$netfile" | jq -c -r "select(.[\"name\"] == \"$netname\") | .[\"dns\"][\"nameservers\"]")
     else
         #shouldn't get here, but if we do assume pvcalls
         pvcalls=1
@@ -85,25 +86,27 @@ fi
 
 vm_name_label="container:$containerid"
 
-vm_uuid=`xe vm-install new-name-label="$vm_name_label" template="$template_uuid" --minimal`
-vdi_uuid=`xe vdi-create sr-uuid="$sr_uuid" name-label="$mountpoint" virtual-size=1KiB`
-vbd_uuid=`xe vbd-create vm-uuid="$vm_uuid" device=1 vdi-uuid="$vdi_uuid" bootable=false mode=RW type=Disk`
+vm_uuid=$(xe vm-install new-name-label="$vm_name_label" template="$template_uuid" --minimal)
+vdi_uuid=$(xe vdi-create sr-uuid="$sr_uuid" name-label="$mountpoint" virtual-size=1KiB)
+vbd_uuid=$(xe vbd-create vm-uuid="$vm_uuid" device=1 vdi-uuid="$vdi_uuid" bootable=false mode=RW type=Disk)
 
-# TODO: Network.
-# if test $pvcalls -eq 0
-# then
-#     if test "$netaddr"
-#     then
-#         echo extra=\'console=hvc0 root=9p rdinit=/bin/init ip=$netaddr gw=$gw route=$route\' >> $outconfig
-#     else
-#         echo extra=\'console=hvc0 root=9p rdinit=/bin/init ip=dhcp\' >> $outconfig
-#     fi
-# else
-#     echo "pvcalls=['']" >> $outconfig
-#     echo extra=\'console=hvc0 root=9p rdinit=/bin/init pvcalls=1\' >> $outconfig
-# fi
+pv_args=$(xe vm-param-get param-name=PV-args uuid=$vm_uuid)
 
-echo $cmdline > $mountpoint/cmdline
+if test $pvcalls -eq 0
+then
+    if test "$netaddr"
+    then
+        pv_args="$pv_args ip=$netaddr gw=$gw route=$route dns=$dns bridge=$bridge"
+    else
+        pv_args="$pv_args ip=dhcp bridge=$bridge"
+    fi
+else
+    pv_args="$pv_args pvcalls=1"
+fi
+
+xe vm-param-set uuid="$vm_uuid" PV-args="$pv_args"
+
+echo "$cmdline" > "$mountpoint"/cmdline
 
 echo -n "$vm_uuid" > "$vm_uuid_file"
 echo -n "$vdi_uuid" > "$vdi_uuid_file"

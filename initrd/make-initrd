@@ -59,8 +59,6 @@ ln -s -f /init $tmpdir/bin/init # Change default busybox init.
 
 cp "$base"/enter $tmpdir/bin
 chmod +x $tmpdir/bin/enter
-cp "$base"/configure-network $tmpdir/bin
-chmod +x $tmpdir/bin/configure-network
 
 cd $tmpdir
 find . | cpio --create --format='newc' > $tmpfile
