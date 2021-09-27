@@ -21,7 +21,7 @@ then
   fi
 fi
 
-pid=""
+pid="0"
 if test -f "$pidfile"
 then
     pid=$( cat "$pidfile" )

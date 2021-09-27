@@ -7,12 +7,12 @@ workpath="$1"
 vm_uuid="$2"
 vdi_uuid="$3"
 wrapper_pid="$4"
-container_cmd="$5"
+container_pipe="$5"
 
-trap '' INT ABRT
+trap '' INT TERM ABRT
 
 domid=''
-read line <$container_cmd
+read line <$container_pipe
 if [[ "$line" == 'start' ]]; then
     domid=`list_domains | grep -i "$vm_uuid" | awk '{print $1}'`
 else
@@ -21,14 +21,18 @@ fi
 
 if [[ $domid ]]; then
     path=/local/domain/$domid
+    xenstore-watch $path > $container_pipe &
+    watch_pid=$!
     while read watch ; do
         xenstore-read $path
         if [ $? -ne 0 ]; then
             kill $wrapper_pid
             break
         fi
-    done < <(xenstore-watch $path)
+    done <$container_pipe
+    kill -9 $watch_pid
 fi
 
 tail --pid="$wrapper_pid" -f /dev/null
 "$workpath/delete" "$vm_uuid" "$vdi_uuid"
+wait

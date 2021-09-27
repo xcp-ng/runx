@@ -15,7 +15,7 @@ kernel="$workpath/kernel"
 ramdisk="$workpath/initrd"
 vm_uuid_file="$crundir/xcp_vm_uuid"
 vdi_uuid_file="$crundir/xcp_vdi_uuid"
-container_cmd="$crundir/container_cmd"
+container_pipe="$crundir/container_pipe"
 
 sr_uuid=""
 for i in $env
@@ -116,10 +116,10 @@ echo -n "$vdi_uuid" > "$vdi_uuid_file"
 # This program can be destroyed by docker using "docker kill...", when this last one is killed, a second
 # program called "container" executes "xe vm-destroy, vdi-destroy...".
 # Otherwise with only one script we can't clean and shutdown properly the VM if a SIGKILL is received.
-mkfifo "$container_cmd"
+mkfifo "$container_pipe"
 "$workpath/container-wrapper" &
 wrapper_pid="$!"
-"$workpath/container" "$workpath" "$vm_uuid" "$vdi_uuid" "$wrapper_pid" "$container_cmd" &
+"$workpath/container" "$workpath" "$vm_uuid" "$vdi_uuid" "$wrapper_pid" "$container_pipe" &
 
 # Set the PID to make Docker happy.
 echo -n "$wrapper_pid" > "$pidfile"

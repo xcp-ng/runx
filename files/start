@@ -7,4 +7,4 @@ crundir="$3"
 vm_uuid=$( cat "$crundir"/xcp_vm_uuid )
 
 xe vm-start uuid="$vm_uuid"
-echo -n "start" > "$crundir/container_cmd"
+echo -n "start" > "$crundir/container_pipe"
