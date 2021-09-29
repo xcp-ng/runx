@@ -24,7 +24,7 @@ if [[ $domid ]]; then
     xenstore-watch $path > $container_pipe &
     watch_pid=$!
     while read watch ; do
-        xenstore-read $path
+        xenstore-read $path &>/dev/null
         if [ $? -ne 0 ]; then
             kill $wrapper_pid
             break
