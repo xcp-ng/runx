@@ -107,7 +107,15 @@ fi
 
 xe vm-param-set uuid="$vm_uuid" PV-args="$pv_args"
 
-echo "$cmdline" > "$mountpoint"/cmdline
+runx_dir="$mountpoint/run/runx"
+
+# Set command line.
+mkdir -p "$runx_dir"
+echo "$cmdline" > "$runx_dir"/cmdline
+
+# Share ENV variables.
+env_variables=$(cat "$configfile" | jq  -c -r '.["process"]["env"] | join("\n")')
+echo "$env_variables" > "$runx_dir/env"
 
 echo -n "$vm_uuid" > "$vm_uuid_file"
 echo -n "$vdi_uuid" > "$vdi_uuid_file"

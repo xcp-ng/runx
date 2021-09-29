@@ -18,7 +18,8 @@ poweroff_handler() {
 
 trap poweroff_handler 0 USR1 USR2 TERM
 
-cmd=`$BUSYBOX_DIR/cat /cmdline`
+export $($BUSYBOX_DIR/cat /run/runx/env | $BUSYBOX_DIR/xargs)
+cmd=`$BUSYBOX_DIR/cat /run/runx/cmdline`
 echo "Executing $cmd..."
 eval $cmd &
 wait

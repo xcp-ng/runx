@@ -23,4 +23,4 @@ Otherwise, the three parameters are IP addresses, they can be ipv4 or ipv6. *ip*
 
 Command line
 ------------
-The container application to run and its command line arguments (command line arguments for the application) are exposed to the RunX initrd via a special text file at the *root (/)* of the container filesystem. The file is named *cmdline*. The RunX initrd reads the content of the file and uses it to find the application to run and to pass command line arguments to it.
+The container application to run and its command line arguments (command line arguments for the application) are exposed to the RunX initrd via a special text file in */run/runx/* of the container filesystem. The file is named *cmdline*. The RunX initrd reads the content of the file and uses it to find the application to run and to pass command line arguments to it.
