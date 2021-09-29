@@ -30,8 +30,6 @@ switch_9p_root()
     umount /proc
     umount /sys
 
-    mkdir -p $new_root/run
-    mount -t tmpfs tmpfs $new_root/run
     mkdir -p $new_root/run/initramfs
 
     BUSYBOX_DIR=/run/initramfs/bin
