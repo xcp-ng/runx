@@ -19,6 +19,11 @@ poweroff_handler() {
 trap poweroff_handler 0 USR1 USR2 TERM
 
 export $($BUSYBOX_DIR/cat /run/runx/env | $BUSYBOX_DIR/xargs)
+
+if [ "$HOSTNAME" ]; then
+    $BUSYBOX_DIR/hostname "$HOSTNAME"
+fi
+
 cmd=`$BUSYBOX_DIR/cat /run/runx/cmdline`
 echo "Executing $cmd..."
 eval $cmd &

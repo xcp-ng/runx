@@ -48,7 +48,7 @@ switch_9p_root()
 
     # Relink some commands used in enter script.
     # Relinking all commands has a cost of many seconds, so we do that only on required commands.
-    for binary in ash cat chroot getty kill poweroff sleep swapoff sync umount xargs ; do
+    for binary in ash cat chroot getty hostname kill poweroff sleep swapoff sync umount xargs ; do
         ln -s -f $BUSYBOX_DIR/busybox /bin/$binary
     done
 
