@@ -16,6 +16,7 @@ poweroff_handler() {
     $BUSYBOX_DIR/poweroff -f
 }
 
+trap '' INT
 trap poweroff_handler 0 USR1 USR2 TERM
 
 export $($BUSYBOX_DIR/cat /run/runx/env | $BUSYBOX_DIR/xargs)
