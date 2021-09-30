@@ -26,9 +26,24 @@ if [ "$HOSTNAME" ]; then
     $BUSYBOX_DIR/hostname "$HOSTNAME"
 fi
 
+# Try to chdir with root user.
 working_dir=`$BUSYBOX_DIR/cat $CONFIG_DIR/working_dir`
 if [ "$working_dir" ]; then
-    cd "$working_dir"
+    cd "$working_dir" &>/dev/null
+    if [ $? -eq 0 ]; then
+        # Directory changed with success.
+        working_dir=""
+    fi
+fi
+
+# TODO: Change user/group here.
+
+# Retry chdir with new user if necessary.
+if [ "$working_dir" ]; then
+    cd "$working_dir" &>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "Failed to change working dir!"
+    fi
 fi
 
 cmd=`$BUSYBOX_DIR/cat $CONFIG_DIR/cmdline`
