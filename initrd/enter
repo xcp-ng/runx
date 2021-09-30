@@ -1,6 +1,7 @@
 #!/run/initramfs/bin/ash
 
 BUSYBOX_DIR=/run/initramfs/bin
+CONFIG_DIR=/run/runx
 
 poweroff_handler() {
     $BUSYBOX_DIR/kill -s TERM -1
@@ -19,13 +20,18 @@ poweroff_handler() {
 trap '' INT
 trap poweroff_handler 0 USR1 USR2 TERM
 
-export $($BUSYBOX_DIR/cat /run/runx/env | $BUSYBOX_DIR/xargs)
+export $($BUSYBOX_DIR/cat $CONFIG_DIR/env | $BUSYBOX_DIR/xargs)
 
 if [ "$HOSTNAME" ]; then
     $BUSYBOX_DIR/hostname "$HOSTNAME"
 fi
 
-cmd=`$BUSYBOX_DIR/cat /run/runx/cmdline`
+working_dir=`$BUSYBOX_DIR/cat $CONFIG_DIR/working_dir`
+if [ "$working_dir" ]; then
+    cd "$working_dir"
+fi
+
+cmd=`$BUSYBOX_DIR/cat $CONFIG_DIR/cmdline`
 echo "Executing $cmd..."
 eval $cmd &
 wait

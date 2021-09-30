@@ -54,6 +54,8 @@ switch_9p_root()
 
     cd $new_root
     pivot_root . $new_root/run/initramfs
+    cd /
+
     exec $BUSYBOX_DIR/chroot . $BUSYBOX_DIR/getty -n -l $BUSYBOX_DIR/enter 115200 hvc0
 
     $BUSYBOX_DIR/ash # Fallback if we can't execute the command.

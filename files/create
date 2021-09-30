@@ -117,6 +117,23 @@ echo "$cmdline" > "$runx_dir"/cmdline
 env_variables=$(cat "$configfile" | jq  -c -r '.["process"]["env"] | join("\n")')
 echo "$env_variables" > "$runx_dir/env"
 
+# Specify Working dir.
+working_dir=$(cat "$configfile" | jq  -c -r '.["process"]["cwd"]')
+echo -n "$working_dir" > "$runx_dir/working_dir"
+
+# Copy or bind config files.
+config_files=$(cat "$configfile" | jq -c -r '.["mounts"] | map(select(.destination == ("/etc/resolv.conf","/etc/hostname","/etc/hosts", "/run/secrets")) | "\(.source);\(.destination)") | .[]')
+for config in $config_files; do
+    config_source=${config%;*}
+    config_dest=${config#*;}
+
+    if [ -d "$config_source" ]; then
+        mount --bind "$config_source" "$config_dest"
+    elif [ -f "$config_source" ]; then
+        cp "$config_source" "$config_dest"
+    fi
+done
+
 echo -n "$vm_uuid" > "$vm_uuid_file"
 echo -n "$vdi_uuid" > "$vdi_uuid_file"
 
