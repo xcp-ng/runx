@@ -122,14 +122,16 @@ working_dir=$(cat "$configfile" | jq  -c -r '.["process"]["cwd"]')
 echo -n "$working_dir" > "$runx_dir/working_dir"
 
 # Copy or bind config files.
-config_files=$(cat "$configfile" | jq -c -r '.["mounts"] | map(select(.destination == ("/etc/resolv.conf","/etc/hostname","/etc/hosts", "/run/secrets")) | "\(.source);\(.destination)") | .[]')
+config_files=$(cat "$configfile" | jq -c -r '.["mounts"] | map(select(.destination == ("/etc/resolv.conf","/etc/hostname","/etc/hosts","/run/secrets")) | "\(.source);\(.destination)") | .[]')
 for config in $config_files; do
     config_source=${config%;*}
-    config_dest=${config#*;}
+    config_dest=$mountpoint/${config#*;}
 
     if [ -d "$config_source" ]; then
-        mount --bind "$config_source" "$config_dest"
+        mount -o nonempty --bind "$config_source" "$config_dest"
     elif [ -f "$config_source" ]; then
+        # I don't know why but podman creates folders by default...
+        rm -rf "$config_dest"
         cp "$config_source" "$config_dest"
     fi
 done
