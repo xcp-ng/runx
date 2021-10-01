@@ -5,10 +5,17 @@ SHUTDOWN_TIMEOUT=30
 vm_uuid=$1
 vdi_uuid=$2
 
-timeout $SHUTDOWN_TIMEOUT xe vm-shutdown uuid="$vm_uuid" &>/dev/null
-if [ $? -eq 124 ]; then
-    xe vm-shutdown --force uuid="$vm_uuid" &>/dev/null
+if [ "$vm_uuid" ]; then
+    timeout $SHUTDOWN_TIMEOUT xe vm-shutdown uuid="$vm_uuid" &>/dev/null
+    if [ $? -eq 124 ]; then
+        xe vm-shutdown --force uuid="$vm_uuid" &>/dev/null
+    fi
 fi
 
-xe vdi-destroy uuid="$vdi_uuid"
-xe vm-destroy uuid="$vm_uuid"
+if [ "$vdi_uuid" ]; then
+    xe vdi-destroy uuid="$vdi_uuid"
+fi
+
+if [ "$vm_uuid" ]; then
+    xe vm-destroy uuid="$vm_uuid"
+fi

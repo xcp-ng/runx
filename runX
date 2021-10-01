@@ -9,6 +9,7 @@ root=""
 bundle=""
 pidfile=""
 containerid=""
+force=false
 while (( "$#" ))
 do
     if [[ $1 = "--root" ]]
@@ -41,6 +42,12 @@ do
     fi
     if [[ $1 = "--no-pivot" ]]
     then
+        shift
+        continue
+    fi
+    if [[ $1 = "--force" ]]
+    then
+        force=true
         shift
         continue
     fi
@@ -115,8 +122,10 @@ then
     "$workpath/pause" "$workpath" $containerid "$crundir" resume
 elif test $cmd = "kill"
 then
-    "$workpath/delete" `cat "$crundir"/xcp_vm_uuid` `cat "$crundir"/xcp_vdi_uuid`
-    "$workpath/mount" "$crundir" unmount
+    if [ -f "$crundir/xcp_vm_uuid" ] && [ -f "$crundir/xcp_vdi_uuid" ]; then
+        "$workpath/delete" `cat "$crundir"/xcp_vm_uuid` `cat "$crundir"/xcp_vdi_uuid`
+        "$workpath/mount" "$crundir" unmount
+    fi
 elif test $cmd = "create"
 then
     "$workpath/mount" "$crundir" mount
@@ -143,8 +152,10 @@ then
     exit 0 # Previous test can set $? to 1...
 elif test $cmd = "delete"
 then
-    "$workpath/delete" "$workpath" $containerid "$crundir"
-    "$workpath/mount" "$workpath" $containerid "$crundir" unmount
+    if [ -f "$crundir/xcp_vm_uuid" ] && [ -f "$crundir/xcp_vdi_uuid" ]; then
+        "$workpath/delete" `cat "$crundir"/xcp_vm_uuid` `cat "$crundir"/xcp_vdi_uuid`
+        "$workpath/mount" "$crundir" unmount
+    fi
     rm -rf "$crundir"
 else
     :
