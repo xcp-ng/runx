@@ -15,10 +15,11 @@
 set -e
 set -o pipefail
 
-# Path to statically built busybox binary i.e.
-# busybox=/usr/bin/busybox-static-aarch64
+execs="start delete state serial_start create pause mount container container-wrapper"
 
-execs="start delete state serial_start create pause mount container container-wrapper env"
+kernel_path=""
+busybox_path=""
+params=""
 
 # Clean the repo, but save the vendor area
 if [ "x${1:-}" != "x" ] && [ "clean" == "$1" ]; then
@@ -57,6 +58,9 @@ mkdir -p target/usr/share/runX
 for i in $execs; do
     cp files/$i target/usr/share/runX
 done
+
+mkdir -p target/etc
+cp config/runx.conf target/etc
 
 cd sendfd
 make

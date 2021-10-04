@@ -17,7 +17,6 @@ vm_uuid_file="$crundir/xcp_vm_uuid"
 vdi_uuid_file="$crundir/xcp_vdi_uuid"
 container_pipe="$crundir/container_pipe"
 
-sr_uuid=""
 for i in $env
 do
     i=$(echo "$i" | tr -d \")
@@ -33,16 +32,26 @@ do
     fi
 done
 
-for i in $( cat $workpath/env )
+sr_uuid=""
+template_uuid=""
+guest_tools=""
+for i in $( cat /etc/runx.conf )
 do
     i=$(echo $i | tr -d \")
-    if [[ $i = RUNX_SR_UUID=* ]]
+    if [[ $i = SR_UUID=* ]]
     then
-        sr_uuid=${i#RUNX_SR_UUID=}
+        sr_uuid=${i#SR_UUID=}
     fi
-    if [[ $i = RUNX_TEMPLATE_UUID=* ]]
+    if [[ $i = TEMPLATE_UUID=* ]]
     then
-        template_uuid=${i#RUNX_TEMPLATE_UUID=}
+        template_uuid=${i#TEMPLATE_UUID=}
+    fi
+    if [[ $i = GUEST_TOOLS=* ]]
+    then
+        guest_tools=${i#GUEST_TOOLS=}
+        if [ -f "$guest_tools" ]; then
+            guest_tools=$(cat "$guest_tools")
+        fi
     fi
 done
 
@@ -108,6 +117,11 @@ fi
 xe vm-param-set uuid="$vm_uuid" PV-args="$pv_args"
 
 runx_dir="$mountpoint/run/runx"
+
+# Install tools.
+if [ "$guest_tools" ]; then
+    rpm -i --prefix="$mountpoint" "$guest_tools/*.rpm"
+fi
 
 # Set command line.
 mkdir -p "$runx_dir"

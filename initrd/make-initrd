@@ -25,7 +25,7 @@ then
 
     if [[ ! -f $builddir/$busybox_tarball ]]
     then
-        wget -O $builddir/$busybox_tarball --tries=20 $busybox_url
+        wget --no-check-certificate -O $builddir/$busybox_tarball --tries=20 $busybox_url
     fi
     if [[ ! -d $builddir/$busybox_name ]]
     then

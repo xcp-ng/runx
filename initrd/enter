@@ -2,6 +2,7 @@
 
 BUSYBOX_DIR=/run/initramfs/bin
 CONFIG_DIR=/run/runx
+XE_DAEMON=/usr/bin/xe-daemon
 
 poweroff_handler() {
     $BUSYBOX_DIR/kill -s TERM -1
@@ -24,6 +25,27 @@ export $($BUSYBOX_DIR/cat $CONFIG_DIR/env | $BUSYBOX_DIR/xargs)
 
 if [ "$HOSTNAME" ]; then
     $BUSYBOX_DIR/hostname "$HOSTNAME"
+fi
+
+# Run guest tools.
+distro="runx"
+major="1"
+minor="2"
+uname=$($BUSYBOX_DIR/uname -r)
+name="runx"
+
+$BUSYBOX_DIR/cat >/var/cache/xe-linux-distribution <<EOL
+os_distro="${distro}"
+os_majorver="${major}"
+os_minorver="${minor}"
+os_uname="${uname}"
+os_name="${name}"
+EOL
+
+xe_daemon_pid=""
+if [ -f "$XE_DAEMON" ]; then
+    $XE_DAEMON &
+    xe_daemon_pid=$!
 fi
 
 # Try to chdir with root user.
@@ -49,4 +71,9 @@ fi
 cmd=`$BUSYBOX_DIR/cat $CONFIG_DIR/cmdline`
 echo "Executing $cmd..."
 eval $cmd &
+
+if [ "$xe_daemon_pid" ]; then
+    $BUSYBOX_DIR/kill $xe_daemon_pid
+fi
+
 wait
