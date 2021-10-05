@@ -97,14 +97,16 @@ route=`cat /proc/cmdline | grep -o '\broute=[^ ]*' | cut -d = -f 2`
 dns=`cat /proc/cmdline | grep -o '\bdns=[^ ]*' | cut -d = -f 2`
 if test "$ip"
 then
+    [ -z "$bridge" ] && bridge="eth0"
+
     # ipv4
     if [ "$ip" != "${ip#*[0-9].[0-9]}" ]
     then
-        ip link set dev eth0 up
-        ip addr add "$ip" dev eth0
+        ip link set dev "$bridge" up
+        ip addr add "$ip" dev "$bridge"
         if [ "$route" ] && [ "$gw" ]
         then
-            route add -net $route gw $gw eth0
+            route add -net $route gw $gw "$bridge"
         fi
         mkdir -p /mnt/etc
         [ -z "$dns" ] && dns="8.8.8.8"
@@ -112,11 +114,11 @@ then
     # ipv6
     elif [ "$ip" != "${ip#*:[0-9a-fA-F]}" ]
     then
-        ip link set dev eth0 up
-        ip addr add "$ip" dev eth0
+        ip link set dev "$bridge" up
+        ip addr add "$ip" dev "$bridge"
         if [ "$route" ] && [ "$gw" ]
         then
-            route -A inet6 add $route gw $gw eth0
+            route -A inet6 add $route gw $gw "$bridge"
         fi
         mkdir -p /mnt/etc
         [ -z "$dns" ] && dns="2001:4860:4860::8888"

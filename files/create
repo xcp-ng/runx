@@ -102,16 +102,11 @@ vbd_uuid=$(xe vbd-create vm-uuid="$vm_uuid" device=1 vdi-uuid="$vdi_uuid" bootab
 
 pv_args=$(xe vm-param-get param-name=PV-args uuid=$vm_uuid)
 
-if test $pvcalls -eq 0
+if test "$netaddr"
 then
-    if test "$netaddr"
-    then
-        pv_args="$pv_args ip=$netaddr gw=$gw route=$route dns=$dns bridge=$bridge"
-    else
-        pv_args="$pv_args ip=dhcp bridge=$bridge"
-    fi
+    pv_args="$pv_args ip=$netaddr gw=$gw route=$route dns=$dns bridge=$bridge"
 else
-    pv_args="$pv_args pvcalls=1"
+    pv_args="$pv_args ip=dhcp bridge=$bridge"
 fi
 
 xe vm-param-set uuid="$vm_uuid" PV-args="$pv_args"
