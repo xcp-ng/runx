@@ -1,0 +1,6 @@
+.config
+initrd/out
+kernel/out
+sendfd/*.o
+sendfd/sendfd
+target
