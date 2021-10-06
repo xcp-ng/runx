@@ -21,6 +21,30 @@ kernel_path=""
 busybox_path=""
 params=""
 
+while (( "$#" )); do
+    case "$1" in
+        --kernel-path)
+            kernel_path=$2
+            shift
+            shift
+            ;;
+        --busybox-path)
+            busybox_path=$2
+            shift
+            shift
+            ;;
+        -*|--*=)
+            echo "Unknown option: $1" >&2
+            exit 1
+            ;;
+        *)
+            params="$1"
+            shift
+            ;;
+    esac
+done
+set -- "${params[@]}"
+
 # Clean the repo, but save the vendor area
 if [ "x${1:-}" != "x" ] && [ "clean" == "$1" ]; then
     echo "cleaning project"
@@ -33,6 +57,11 @@ if [ "x${1:-}" != "x" ] && [ "clean" == "$1" ]; then
     cd -
 
     exit 0
+fi
+
+if [ -z "$kernel_path" ] || [ -z "$busybox_path" ]; then
+    echo "Expected kernel and busybox paths." >&2
+    exit 1
 fi
 
 # Support cross-compiling via ARCH variable
@@ -73,11 +102,11 @@ cp runX target/usr/sbin
 # Build the kernel and initrd
 if test \! -f target/usr/share/runX/kernel
 then
-    kernel/make-kernel
+    kernel/make-kernel "$kernel_path"
     cp kernel/out/kernel target/usr/share/runX
 fi
 if test \! -f target/usr/share/runX/initrd
 then
-    initrd/make-initrd
+    initrd/make-initrd "$busybox_path"
     cp initrd/out/initrd target/usr/share/runX
 fi
