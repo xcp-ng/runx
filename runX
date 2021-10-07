@@ -1,6 +1,6 @@
 #!/bin/bash
 
-workpath=/root/Projects/runx/files/
+workpath=/usr/share/runX/
 rundir=/run/runX
 
 guestconsole=""
