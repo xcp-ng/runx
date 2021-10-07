@@ -28,8 +28,11 @@ kernel_image="$kernel_path"/arch/"$ARCH"/boot/"$image"
 rm -rf $kernel_outpath
 mkdir -p $kernel_outpath
 
+old_wd=$(pwd)
+
 cd $kernel_path
 cp $kernel_src_config .config
 make -j "$(getconf _NPROCESSORS_ONLN)" $image
 
+cd "$old_wd"
 cp $kernel_image $kernel_out
