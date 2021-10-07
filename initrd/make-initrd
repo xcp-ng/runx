@@ -20,9 +20,13 @@ busybox="$busybox_path/busybox"
 rm -rf $outpath
 mkdir -p $outpath
 
+old_wd=$(pwd)
+
 cd $busybox_path
 cp $busybox_src_config .config
 make -j "$(getconf _NPROCESSORS_ONLN)"
+
+cd "$old_wd"
 
 mkdir -p $tmpdir/bin
 mkdir -p $tmpdir/sbin
