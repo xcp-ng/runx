@@ -83,9 +83,9 @@ else
     exit 1
 fi
 
-mkdir -p target/usr/share/runX
+mkdir -p target/usr/share/runx
 for i in $execs; do
-    cp files/$i target/usr/share/runX
+    cp files/$i target/usr/share/runx
 done
 
 mkdir -p target/etc
@@ -94,19 +94,19 @@ cp config/runx.conf target/etc
 cd sendfd
 make
 cd ..
-cp sendfd/sendfd target/usr/share/runX/
+cp sendfd/sendfd target/usr/share/runx/
 
-mkdir -p target/usr/sbin
-cp runX target/usr/sbin
+mkdir -p target/usr/bin
+cp runx target/usr/bin
 
 # Build the kernel and initrd
-if test \! -f target/usr/share/runX/kernel
+if test \! -f target/usr/share/runx/kernel
 then
     kernel/make-kernel "$kernel_path"
-    cp kernel/out/kernel target/usr/share/runX
+    cp kernel/out/kernel target/usr/share/runx
 fi
-if test \! -f target/usr/share/runX/initrd
+if test \! -f target/usr/share/runx/initrd
 then
     initrd/make-initrd "$busybox_path"
-    cp initrd/out/initrd target/usr/share/runX
+    cp initrd/out/initrd target/usr/share/runx
 fi

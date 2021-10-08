@@ -1,5 +1,5 @@
 Please make sure you have the following installed on your system, they
-are required by runX:
+are required by runx:
 
 run time:
 xen tools (xl) >= 4.9

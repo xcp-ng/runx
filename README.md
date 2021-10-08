@@ -60,20 +60,20 @@ Use the following example config stanza in your
 /etc/containerd/config.toml config file to choose RunX as OCI-runtime:
 
     [plugins.linux]
-         runtime="/usr/sbin/runX"
+         runtime="/usr/bin/runx"
 
 - containerd 1.3.x
 
 There does not seem to be a way to configure containerd so that it runs
-runX instead of runc. You might have to:
+runx instead of runc. You might have to:
 
-    mv /usr/sbin/runX /usr/bin/runc
+    mv /usr/bin/runx /usr/bin/runc
 
 - containerd 1.4.x
 
 Pass "--runc-binary" to ctr run:
 
-    ctr run --runc-binary=/usr/sbin/runX
+    ctr run --runc-binary=/usr/bin/runx
 
 
 
@@ -83,7 +83,7 @@ Networking Configuration
 To get bridge based networking working, you need to include the containerd
 option '--env NETCONF="/path/to/cni/file,name[,IP]"', where:
     - NETCONF is the environmental varable we use to pass info from containerd
-      to runX
+      to runx
     - /path/to/cni/file is the cni v2.0 file used to describe the interface
     - name is the name of the cni interface
     - [,IP] is the optional IP if static addresses are used, otherwise DHCP
@@ -120,7 +120,7 @@ An example cni file is:
 Container Filesystem Binds
 --------------------------
 
-Currently runX only supports filesystem binds.  The defaults are bind and RW.
+Currently runx only supports filesystem binds.  The defaults are bind and RW.
 You can also pass any -o arguement mount uses.  Now you use them in containerd
 like:
 
