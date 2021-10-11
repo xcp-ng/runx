@@ -109,7 +109,9 @@ else
     pv_args="$pv_args ip=dhcp bridge=$bridge"
 fi
 
-xe vm-param-set uuid="$vm_uuid" PV-args="$pv_args"
+xe vm-param-set uuid="$vm_uuid" PV-args="$pv_args root=9p rdinit=/bin/init pvcalls=1"
+xe vm-param-set uuid="$vm_uuid" PV-kernel="/boot/guest/runx/kernel"
+xe vm-param-set uuid="$vm_uuid" PV-ramdisk="/boot/guest/runx/initrd"
 
 runx_dir="$mountpoint/run/runx"
 
