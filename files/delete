@@ -5,6 +5,14 @@ SHUTDOWN_TIMEOUT=30
 vm_uuid=$1
 vdi_uuid=$2
 
+if [ "$vdi_uuid" ]; then
+    sr_uuid=$(xe vdi-param-get uuid="$vdi_uuid" param-name=sr-uuid)
+    vm_name_label=$(xe vm-param-get uuid="$vm_uuid" param-name=name-label)
+    pbd_uuid=$(xe sr-param-get uuid="$sr_uuid" param-name=PBDs)
+    sr_dir=$(xe pbd-param-get uuid="$pbd_uuid" param-name=device-config param-key=file-uri)
+    dir_links="$sr_dir/directories"
+fi
+
 if [ "$vm_uuid" ]; then
     timeout $SHUTDOWN_TIMEOUT xe vm-shutdown uuid="$vm_uuid" &>/dev/null
     if [ $? -eq 124 ]; then
@@ -13,7 +21,9 @@ if [ "$vm_uuid" ]; then
 fi
 
 if [ "$vdi_uuid" ]; then
-    xe vdi-destroy uuid="$vdi_uuid"
+    # destroy volume
+    rm -f "$dir_links/$vm_name_label"
+    xe sr-scan uuid="$sr_uuid"
 fi
 
 if [ "$vm_uuid" ]; then
