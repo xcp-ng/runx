@@ -4,13 +4,10 @@ SHUTDOWN_TIMEOUT=30
 
 vm_uuid=$1
 vdi_uuid=$2
+dir_links="$3/directories"
 
 if [ "$vdi_uuid" ]; then
     sr_uuid=$(xe vdi-param-get uuid="$vdi_uuid" param-name=sr-uuid)
-    vm_name_label=$(xe vm-param-get uuid="$vm_uuid" param-name=name-label)
-    pbd_uuid=$(xe sr-param-get uuid="$sr_uuid" param-name=PBDs)
-    sr_dir=$(xe pbd-param-get uuid="$pbd_uuid" param-name=device-config param-key=file-uri)
-    dir_links="$sr_dir/directories"
 fi
 
 if [ "$vm_uuid" ]; then
@@ -22,7 +19,7 @@ fi
 
 if [ "$vdi_uuid" ]; then
     # destroy volume
-    rm -f "$dir_links/$vm_name_label"
+    rm -f "$dir_links/$vm_uuid"
     xe sr-scan uuid="$sr_uuid"
 fi
 
