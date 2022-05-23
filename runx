@@ -122,8 +122,12 @@ then
     "$workpath/pause" "$workpath" $containerid "$crundir" resume
 elif test $cmd = "kill"
 then
-    if [ -f "$crundir/xcp_vm_uuid" ] && [ -f "$crundir/xcp_vdi_uuid" ]; then
-        "$workpath/delete" `cat "$crundir"/xcp_vm_uuid` `cat "$crundir"/xcp_vdi_uuid` `cat "$crundir"/xcp_sr_path`
+    if [ -f "$crundir/xcp_vm_uuid" ] && [ -f "$crundir/xcp_vdi_uuid" ] && \
+       [ -f "$crundir/xcp_sr_path" ] && [ -f "$crundir/xcp_sr_uuid"]; then
+        "$workpath/delete" `cat "$crundir"/xcp_vm_uuid` \
+        `cat "$crundir"/xcp_vdi_uuid` \
+        `cat "$crundir"/xcp_sr_path` \
+        `cat "$crundir"/xcp_sr_uuid`
         "$workpath/mount" "$crundir" unmount
     fi
 elif test $cmd = "create"
@@ -152,8 +156,12 @@ then
     exit 0 # Previous test can set $? to 1...
 elif test $cmd = "delete"
 then
-    if [ -f "$crundir/xcp_vm_uuid" ] && [ -f "$crundir/xcp_vdi_uuid" ]; then
-        "$workpath/delete" `cat "$crundir"/xcp_vm_uuid` `cat "$crundir"/xcp_vdi_uuid` `cat "$crundir"/xcp_sr_path`
+    if [ -f "$crundir/xcp_vm_uuid" ] && [ -f "$crundir/xcp_vdi_uuid" ] && \
+       [ -f "$crundir/xcp_sr_path" ] && [ -f "$crundir/xcp_sr_uuid"]; then
+        "$workpath/delete" `cat "$crundir"/xcp_vm_uuid` \
+        `cat "$crundir"/xcp_vdi_uuid` \
+        `cat "$crundir"/xcp_sr_path` \
+        `cat "$crundir"/xcp_sr_uuid`
         "$workpath/mount" "$crundir" unmount
     fi
     rm -rf "$crundir"

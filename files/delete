@@ -5,10 +5,7 @@ SHUTDOWN_TIMEOUT=30
 vm_uuid=$1
 vdi_uuid=$2
 dir_links="$3/directories"
-
-if [ "$vdi_uuid" ]; then
-    sr_uuid=$(xe vdi-param-get uuid="$vdi_uuid" param-name=sr-uuid)
-fi
+sr_uuid=$4
 
 if [ "$vm_uuid" ]; then
     timeout $SHUTDOWN_TIMEOUT xe vm-shutdown uuid="$vm_uuid" &>/dev/null

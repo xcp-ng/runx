@@ -17,6 +17,7 @@ vm_uuid_file="$crundir/xcp_vm_uuid"
 vdi_uuid_file="$crundir/xcp_vdi_uuid"
 container_pipe="$crundir/container_pipe"
 sr_path_file="$crundir/xcp_sr_path"
+sr_uuid_file="$crundir/xcp_sr_uuid"
 
 for i in $env
 do
@@ -165,6 +166,7 @@ done
 
 echo -n "$vm_uuid" > "$vm_uuid_file"
 echo -n "$vdi_uuid" > "$vdi_uuid_file"
+echo -n "$sr_uuid" > "$sr_uuid_file"
 echo -n "$sr_path" > "$sr_path_file"
 
 # Idea: We start a small program called "container-wrapper" to wait for a SIGINT, SIGABORT or SIGKILL.
@@ -174,7 +176,8 @@ echo -n "$sr_path" > "$sr_path_file"
 mkfifo "$container_pipe"
 "$workpath/container-wrapper" &
 wrapper_pid="$!"
-"$workpath/container" "$workpath" "$vm_uuid" "$vdi_uuid" "$wrapper_pid" "$container_pipe" "$sr_path" &
+"$workpath/container" "$workpath" "$vm_uuid" "$vdi_uuid" "$wrapper_pid" \
+"$container_pipe" "$sr_path" "$sr_uuid" &
 
 # Set the PID to make Docker happy.
 echo -n "$wrapper_pid" > "$pidfile"
