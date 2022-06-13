@@ -8,6 +8,8 @@ vm_uuid="$2"
 vdi_uuid="$3"
 wrapper_pid="$4"
 container_pipe="$5"
+sr_path="$6"
+sr_uuid="$7"
 
 trap '' INT TERM ABRT
 
@@ -34,5 +36,5 @@ if [[ $domid ]]; then
 fi
 
 tail --pid="$wrapper_pid" -f /dev/null
-"$workpath/delete" "$vm_uuid" "$vdi_uuid"
+"$workpath/delete" "$vm_uuid" "$vdi_uuid" "$sr_path" "$sr_uuid"
 wait

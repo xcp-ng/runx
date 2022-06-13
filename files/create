@@ -16,6 +16,8 @@ ramdisk="$workpath/initrd"
 vm_uuid_file="$crundir/xcp_vm_uuid"
 vdi_uuid_file="$crundir/xcp_vdi_uuid"
 container_pipe="$crundir/container_pipe"
+sr_path_file="$crundir/xcp_sr_path"
+sr_uuid_file="$crundir/xcp_sr_uuid"
 
 for i in $env
 do
@@ -96,10 +98,25 @@ fi
 
 vm_name_label="container:$containerid"
 
-vm_uuid=$(xe vm-install new-name-label="$vm_name_label" template="$template_uuid" --minimal)
-vdi_uuid=$(xe vdi-create sr-uuid="$sr_uuid" name-label="$mountpoint" virtual-size=1KiB)
-vbd_uuid=$(xe vbd-create vm-uuid="$vm_uuid" device=1 vdi-uuid="$vdi_uuid" bootable=false mode=RW type=Disk)
+# FIXME: there could be many pbds, choose the right one
+pbd_uuid=$(xe sr-param-get uuid="$sr_uuid" param-name=PBDs)
+sr_path=$(xe pbd-param-get uuid="$pbd_uuid" param-name=device-config param-key=file-uri)
 
+# use a different folder for symlinks since
+# the sr_path has the symlinks that are created by the driver
+dir_links="$sr_path/directories"
+
+vm_uuid=$(xe vm-install new-name-label="$vm_name_label" template="$template_uuid" --minimal)
+
+# create symlink and issue scan() to create the new vdi
+# mountpoint must be absolute
+ln -s "$mountpoint" "$dir_links/$vm_uuid"
+# note that sr-scan triggers an sr.ls() and then a sr.stat()
+# the vdis are created during sr.ls()
+xe sr-scan uuid="$sr_uuid"
+
+vdi_uuid=$(xe vdi-list name-label="$vm_uuid" sr-uuid="$sr_uuid" --minimal)
+vbd_uuid=$(xe vbd-create vm-uuid="$vm_uuid" device=1 vdi-uuid="$vdi_uuid" bootable=false mode=RW type=Disk)
 pv_args=$(xe vm-param-get param-name=PV-args uuid=$vm_uuid)
 
 if test "$netaddr"
@@ -149,6 +166,8 @@ done
 
 echo -n "$vm_uuid" > "$vm_uuid_file"
 echo -n "$vdi_uuid" > "$vdi_uuid_file"
+echo -n "$sr_uuid" > "$sr_uuid_file"
+echo -n "$sr_path" > "$sr_path_file"
 
 # Idea: We start a small program called "container-wrapper" to wait for a SIGINT, SIGABORT or SIGKILL.
 # This program can be destroyed by docker using "docker kill...", when this last one is killed, a second
@@ -157,7 +176,8 @@ echo -n "$vdi_uuid" > "$vdi_uuid_file"
 mkfifo "$container_pipe"
 "$workpath/container-wrapper" &
 wrapper_pid="$!"
-"$workpath/container" "$workpath" "$vm_uuid" "$vdi_uuid" "$wrapper_pid" "$container_pipe" &
+"$workpath/container" "$workpath" "$vm_uuid" "$vdi_uuid" "$wrapper_pid" \
+"$container_pipe" "$sr_path" "$sr_uuid" &
 
 # Set the PID to make Docker happy.
 echo -n "$wrapper_pid" > "$pidfile"
